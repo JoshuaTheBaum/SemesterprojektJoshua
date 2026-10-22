@@ -7,7 +7,7 @@
 <h2>Semester</h2>
 <ul>
     {% for s in semester %}
-        <li>{{ s["name"] }}</li>
+        <li><a href="{{ url_for('semester_ansicht', id=s['id']) }}">{{ s["name"] }}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

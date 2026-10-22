@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ semester["name"] }}</h1>
+
+<table>
+    <tr>
+        <th>Modul</th>
+        <th>ECTS</th>
+    </tr>
+    {% for m in module %}
+    <tr>
+        <td>{{ m["name"] }}</td>
+        <td>{{ m["ects"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
