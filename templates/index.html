@@ -3,4 +3,11 @@
 {% block content %}
 <h1>GradeView</h1>
 <p>Persönliche Notenübersicht für Studierende</p>
+
+<h2>Semester</h2>
+<ul>
+    {% for s in semester %}
+        <li>{{ s["name"] }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}
