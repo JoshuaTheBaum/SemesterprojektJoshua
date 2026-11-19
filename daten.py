@@ -1,3 +1,5 @@
+from models import Session, Semester, Modul, Leistungsnachweis
+
 semester = [
     {"id": 1, "name": "1. Semester"},
     {"id": 2, "name": "2. Semester"},
@@ -37,3 +39,24 @@ nachweise = [
     {"id": 7, "name": "Prüfung 3", "gewicht": 20, "note": None, "modul_id": 18},
     {"id": 8, "name": "Projekt", "gewicht": 50, "note": None, "modul_id": 18},
 ]
+
+def beispieldaten_einfuegen():
+    """Fügt die Beispieldaten ein, falls die Datenbank noch leer ist."""
+    with Session() as session:
+        # Wenn schon ein Semester existiert, nichts tun
+        if session.query(Semester).first() is not None:
+            return
+
+        objekte = []
+        for s in semester:
+            objekte.append(Semester(id=s["id"], name=s["name"]))
+        for m in module:
+            objekte.append(Modul(id=m["id"], name=m["name"], ects=m["ects"],
+                                 semester_id=m["semester_id"]))
+        for n in nachweise:
+            objekte.append(Leistungsnachweis(id=n["id"], name=n["name"],
+                                             gewicht=n["gewicht"], note=n["note"],
+                                             modul_id=n["modul_id"]))
+
+        session.add_all(objekte)
+        session.commit()

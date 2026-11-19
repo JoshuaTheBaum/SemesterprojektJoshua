@@ -1,32 +1,29 @@
 from flask import Flask, render_template
+from models import Session, Semester, Modul
 import daten
 
 app = Flask(__name__)
+daten.beispieldaten_einfuegen()
 
 
 @app.route("/")
 def index():
     """Startseite von GradeView."""
-    return render_template("index.html", semester=daten.semester)
+    with Session() as session:
+        alle_semester = session.query(Semester).order_by(Semester.id).all()
+        return render_template("index.html", semester=alle_semester)
 
 
 @app.route("/semester/<int:id>")
 def semester_ansicht(id):
     """Zeigt alle Module eines Semesters."""
-    
-    # Semester mit der passenden id suchen
-    gefunden = None
-    for s in daten.semester:
-        if s["id"] == id:
-            gefunden = s
+    with Session() as session:
+        gefunden = session.query(Semester).filter(Semester.id == id).first()
+        if gefunden is None:
+            return "Semester nicht gefunden", 404
 
-    # Alle Module dieses Semesters sammeln
-    module_liste = []
-    for m in daten.module:
-        if m["semester_id"] == id:
-            module_liste.append(m)
-
-    return render_template("semester.html", semester=gefunden, module=module_liste)
+        module_liste = session.query(Modul).filter(Modul.semester_id == id).all()
+        return render_template("semester.html", semester=gefunden, module=module_liste)
 
 
 if __name__ == "__main__":
