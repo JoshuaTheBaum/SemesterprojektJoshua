@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from models import Session, Semester, Modul
+from models import Session, Semester, Modul, Leistungsnachweis
 import daten
 
 app = Flask(__name__)
@@ -24,6 +24,24 @@ def semester_ansicht(id):
 
         module_liste = session.query(Modul).filter(Modul.semester_id == id).all()
         return render_template("semester.html", semester=gefunden, module=module_liste)
+
+    
+@app.route("/modul/<int:id>")
+def modul_ansicht(id):
+    """Zeigt ein Modul mit allen Leistungsnachweisen."""
+    with Session() as session:
+        modul = session.query(Modul).filter(Modul.id == id).first()
+        if modul is None:
+            return "Modul nicht gefunden", 404
+
+        nachweise = session.query(Leistungsnachweis).filter(
+            Leistungsnachweis.modul_id == id).all()
+        return render_template("modul.html", modul=modul, nachweise=nachweise)
+
+@app.errorhandler(404)
+def not_found(error):
+    """Fehlerseite für unbekannte Adressen."""
+    return "Seite nicht gefunden", 404
 
 
 if __name__ == "__main__":

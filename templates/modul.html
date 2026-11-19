@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ modul.name }}</h1>
+<p>ECTS: {{ modul.ects }}</p>
+
+<table>
+    <tr>
+        <th>Leistungsnachweis</th>
+        <th>Gewichtung</th>
+        <th>Note</th>
+    </tr>
+    {% for n in nachweise %}
+    <tr>
+        <td>{{ n.name }}</td>
+        <td>{{ n.gewicht }} %</td>
+        <td>
+            {% if n.note is none %}
+                offen
+            {% else %}
+                {{ n.note }}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<p><a href="{{ url_for('semester_ansicht', id=modul.semester_id) }}">Zurück zum Semester</a></p>
+{% endblock %}

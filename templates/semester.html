@@ -10,7 +10,7 @@
     </tr>
     {% for m in module %}
     <tr>
-        <td>{{ m.name }}</td>
+        <td><a href="{{ url_for('modul_ansicht', id=m.id) }}">{{ m.name }}</a></td>
         <td>{{ m.ects }}</td>
     </tr>
     {% endfor %}
