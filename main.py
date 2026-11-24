@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from models import Session, Semester, Modul, Leistungsnachweis
 import daten
+import berechnung
 
 app = Flask(__name__)
 daten.beispieldaten_einfuegen()
@@ -16,14 +17,25 @@ def index():
 
 @app.route("/semester/<int:id>")
 def semester_ansicht(id):
-    """Zeigt alle Module eines Semesters."""
+    """Zeigt alle Module eines Semesters mit Note, Status und Semesterschnitt."""
     with Session() as session:
         gefunden = session.query(Semester).filter(Semester.id == id).first()
         if gefunden is None:
             return "Semester nicht gefunden", 404
 
         module_liste = session.query(Modul).filter(Modul.semester_id == id).all()
-        return render_template("semester.html", semester=gefunden, module=module_liste)
+
+        # Für jedes Modul die Note und den Status berechnen
+        zeilen = []
+        for m in module_liste:
+            nachweise = session.query(Leistungsnachweis).filter(
+                Leistungsnachweis.modul_id == m.id).all()
+            note = berechnung.modulnote(nachweise)
+            zeilen.append({"modul": m, "note": note, "status": berechnung.status(note)})
+
+        schnitt = berechnung.semesterschnitt(zeilen)
+        return render_template("semester.html", semester=gefunden,
+                               zeilen=zeilen, schnitt=schnitt)
 
     
 @app.route("/modul/<int:id>")
@@ -36,7 +48,9 @@ def modul_ansicht(id):
 
         nachweise = session.query(Leistungsnachweis).filter(
             Leistungsnachweis.modul_id == id).all()
-        return render_template("modul.html", modul=modul, nachweise=nachweise)
+        note = berechnung.modulnote(nachweise)
+        return render_template("modul.html", modul=modul, nachweise=nachweise,
+                               note=note, status=berechnung.status(note))
 
 @app.errorhandler(404)
 def not_found(error):

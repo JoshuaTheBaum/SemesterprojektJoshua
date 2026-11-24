@@ -4,6 +4,12 @@
 <h1>{{ modul.name }}</h1>
 <p>ECTS: {{ modul.ects }}</p>
 
+<p>
+    Modulnote:
+    {% if note is none %}noch nicht berechenbar{% else %}<strong>{{ note }}</strong>{% endif %}
+    ({{ status }})
+</p>
+
 <table>
     <tr>
         <th>Leistungsnachweis</th>
