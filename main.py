@@ -149,6 +149,139 @@ def modul_loeschen(id):
         session.commit()
     return redirect(url_for("semester_ansicht", id=semester_id))
 
+def summe_andere_gewichte(session, modul_id, ausser_id):
+    """Summiert die Gewichtungen aller Leistungsnachweise eines Moduls.
+
+    Der Leistungsnachweis mit der id ausser_id wird nicht mitgezählt
+    (wichtig beim Bearbeiten). Beim Erfassen ist ausser_id None.
+    """
+    summe = 0
+    nachweise = session.query(Leistungsnachweis).filter(
+        Leistungsnachweis.modul_id == modul_id).all()
+    for n in nachweise:
+        if n.id != ausser_id:
+            summe = summe + n.gewicht
+    return summe
+
+
+def nachweis_pruefen(name, gewicht_text, note_text, andere_gewichte):
+    """Prüft die Eingaben des Leistungsnachweis-Formulars (Sanitizing).
+
+    Gibt eine Fehlermeldung zurück oder None, wenn alles in Ordnung ist.
+    """
+    if name == "":
+        return "Bitte eine Bezeichnung eingeben."
+    if gewicht_text == "":
+        return "Bitte die Gewichtung eingeben."
+
+    gewicht = int(gewicht_text)
+    if gewicht <= 0 or gewicht > 100:
+        return "Die Gewichtung muss zwischen 1 und 100 % liegen."
+    if andere_gewichte + gewicht > 100:
+        return f"Die Gewichtungen ergeben mehr als 100 % (bereits vergeben: {andere_gewichte} %)."
+
+    if note_text != "":
+        note = float(note_text)
+        if note < 1 or note > 6:
+            return "Die Note muss zwischen 1 und 6 liegen."
+    return None
+
+
+def note_umwandeln(note_text):
+    """Wandelt die Eingabe in eine Note um. Leeres Feld bedeutet: Note noch offen."""
+    if note_text == "":
+        return None
+    return float(note_text)
+
+
+@app.route("/modul/<int:id>/nachweis/neu")
+def nachweis_neu(id):
+    """Zeigt das leere Formular für einen neuen Leistungsnachweis."""
+    return render_template("nachweis_formular.html", titel="Neuer Leistungsnachweis",
+                           aktion=url_for("nachweis_neu_speichern", id=id),
+                           name="", gewicht="", note="", fehler=None)
+
+
+@app.route("/modul/<int:id>/nachweis/neu", methods=["POST"])
+def nachweis_neu_speichern(id):
+    """Speichert einen neuen Leistungsnachweis im Modul."""
+    name = request.form["name"].strip()
+    gewicht_text = request.form["gewicht"].strip()
+    note_text = request.form["note"].strip()
+
+    with Session() as session:
+        andere = summe_andere_gewichte(session, id, None)
+        fehler = nachweis_pruefen(name, gewicht_text, note_text, andere)
+        if fehler is not None:
+            return render_template("nachweis_formular.html", titel="Neuer Leistungsnachweis",
+                                   aktion=url_for("nachweis_neu_speichern", id=id),
+                                   name=name, gewicht=gewicht_text, note=note_text,
+                                   fehler=fehler)
+
+        session.add_all([Leistungsnachweis(name=name, gewicht=int(gewicht_text),
+                                           note=note_umwandeln(note_text), modul_id=id)])
+        session.commit()
+    return redirect(url_for("modul_ansicht", id=id))
+
+
+@app.route("/nachweis/<int:id>/bearbeiten")
+def nachweis_bearbeiten(id):
+    """Zeigt das Formular mit den Daten eines bestehenden Leistungsnachweises."""
+    with Session() as session:
+        nachweis = session.query(Leistungsnachweis).filter(Leistungsnachweis.id == id).first()
+        if nachweis is None:
+            return "Leistungsnachweis nicht gefunden", 404
+
+        # Offene Note als leeres Feld anzeigen statt "None"
+        note = ""
+        if nachweis.note is not None:
+            note = nachweis.note
+
+        return render_template("nachweis_formular.html", titel="Leistungsnachweis bearbeiten",
+                               aktion=url_for("nachweis_bearbeiten_speichern", id=id),
+                               name=nachweis.name, gewicht=nachweis.gewicht, note=note,
+                               fehler=None)
+
+
+@app.route("/nachweis/<int:id>/bearbeiten", methods=["POST"])
+def nachweis_bearbeiten_speichern(id):
+    """Speichert die Änderungen an einem Leistungsnachweis."""
+    name = request.form["name"].strip()
+    gewicht_text = request.form["gewicht"].strip()
+    note_text = request.form["note"].strip()
+
+    with Session() as session:
+        nachweis = session.query(Leistungsnachweis).filter(Leistungsnachweis.id == id).first()
+        if nachweis is None:
+            return "Leistungsnachweis nicht gefunden", 404
+        modul_id = nachweis.modul_id
+
+        andere = summe_andere_gewichte(session, modul_id, id)
+        fehler = nachweis_pruefen(name, gewicht_text, note_text, andere)
+        if fehler is not None:
+            return render_template("nachweis_formular.html", titel="Leistungsnachweis bearbeiten",
+                                   aktion=url_for("nachweis_bearbeiten_speichern", id=id),
+                                   name=name, gewicht=gewicht_text, note=note_text,
+                                   fehler=fehler)
+
+        session.query(Leistungsnachweis).filter(Leistungsnachweis.id == id).update(
+            {"name": name, "gewicht": int(gewicht_text), "note": note_umwandeln(note_text)})
+        session.commit()
+    return redirect(url_for("modul_ansicht", id=modul_id))
+
+
+@app.route("/nachweis/<int:id>/loeschen", methods=["POST"])
+def nachweis_loeschen(id):
+    """Löscht einen Leistungsnachweis."""
+    with Session() as session:
+        nachweis = session.query(Leistungsnachweis).filter(Leistungsnachweis.id == id).first()
+        if nachweis is None:
+            return "Leistungsnachweis nicht gefunden", 404
+        modul_id = nachweis.modul_id
+
+        session.query(Leistungsnachweis).filter(Leistungsnachweis.id == id).delete()
+        session.commit()
+    return redirect(url_for("modul_ansicht", id=modul_id))
 
 @app.errorhandler(404)
 def not_found(error):

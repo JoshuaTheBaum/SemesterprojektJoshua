@@ -14,6 +14,7 @@
         <th>Leistungsnachweis</th>
         <th>Gewichtung</th>
         <th>Note</th>
+        <th>Aktionen</th>
     </tr>
     {% for n in nachweise %}
     <tr>
@@ -26,9 +27,17 @@
                 {{ n.note }}
             {% endif %}
         </td>
+        <td>
+            <a href="{{ url_for('nachweis_bearbeiten', id=n.id) }}">Bearbeiten</a>
+            <form action="{{ url_for('nachweis_loeschen', id=n.id) }}" method="post">
+                <input type="submit" value="Löschen">
+            </form>
+        </td>
     </tr>
     {% endfor %}
 </table>
+
+<p><a href="{{ url_for('nachweis_neu', id=modul.id) }}">Leistungsnachweis hinzufügen</a></p>
 
 <p><a href="{{ url_for('modul_bearbeiten', id=modul.id) }}">Modul bearbeiten</a></p>
 
