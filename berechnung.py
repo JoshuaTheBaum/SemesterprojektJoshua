@@ -41,3 +41,31 @@ def semesterschnitt(zeilen):
     if summe_ects == 0:
         return None
     return round(summe_noten / summe_ects, 2)
+
+
+
+def kennzahlen(zeilen):
+    """Berechnet die Kennzahlen für das Dashboard.
+    Gibt ein Dict mit Gesamtschnitt, gesammelten ECTS und der Anzahl
+    bestandener, nicht bestandener und offener Module zurück.
+    """
+    ects = 0
+    bestanden = 0
+    nicht_bestanden = 0
+    offen = 0
+    for z in zeilen:
+        if z["status"] == "bestanden":
+            bestanden = bestanden + 1
+            ects = ects + z["modul"].ects
+        elif z["status"] == "nicht bestanden":
+            nicht_bestanden = nicht_bestanden + 1
+        else:
+            offen = offen + 1
+
+    return {
+        "schnitt": semesterschnitt(zeilen),
+        "ects": ects,
+        "bestanden": bestanden,
+        "nicht_bestanden": nicht_bestanden,
+        "offen": offen,
+    }

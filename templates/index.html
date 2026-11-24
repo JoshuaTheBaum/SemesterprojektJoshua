@@ -4,6 +4,30 @@
 <h1>GradeView</h1>
 <p>Persönliche Notenübersicht für Studierende</p>
 
+<h2>Übersicht</h2>
+<table>
+    <tr>
+        <td>Gesamtschnitt</td>
+        <td>{% if k.schnitt is none %}–{% else %}<strong>{{ k.schnitt }}</strong>{% endif %}</td>
+    </tr>
+    <tr>
+        <td>Gesammelte ECTS</td>
+        <td>{{ k.ects }}</td>
+    </tr>
+    <tr>
+        <td>Bestandene Module</td>
+        <td>{{ k.bestanden }}</td>
+    </tr>
+    <tr>
+        <td>Nicht bestandene Module</td>
+        <td>{{ k.nicht_bestanden }}</td>
+    </tr>
+    <tr>
+        <td>Offene Module</td>
+        <td>{{ k.offen }}</td>
+    </tr>
+</table>
+
 <h2>Semester</h2>
 <ul>
     {% for s in semester %}
