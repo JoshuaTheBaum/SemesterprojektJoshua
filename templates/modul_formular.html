@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ titel }}</h1>
+
+{% if fehler %}
+<p><strong>{{ fehler }}</strong></p>
+{% endif %}
+
+<form action="{{ aktion }}" method="post">
+    <p>
+        Name:<br>
+        <input type="text" name="name" value="{{ name }}" required>
+    </p>
+    <p>
+        ECTS:<br>
+        <input type="number" name="ects" value="{{ ects }}" min="1" required>
+    </p>
+    <input type="submit" value="Speichern">
+</form>
+{% endblock %}
